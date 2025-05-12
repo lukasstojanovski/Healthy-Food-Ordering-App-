@@ -1,0 +1,178 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { View, Text, TextInput, Switch, Button, Alert, StyleSheet, ActivityIndicator } from "react-native";
+import { collection, addDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
+import Constants from 'expo-constants';
+
+export default function CreateItemDetails() {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const { name, description, price } = params;
+  const apiKey = Constants.expoConfig?.extra?.openaiApiKey;
+
+  const [calories, setCalories] = useState("");
+  const [tags, setTags] = useState({
+    cholesterol: false,
+    diabetes: false,
+    contains_gluten: false,
+    hypertension: false,
+    lactose_free: false,
+    nut_allergy: false,
+  });
+  const [loading, setLoading] = useState(true);
+
+  const toggleTag = (key: keyof typeof tags) => {
+    setTags((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  useEffect(() => {
+    const generateHealthData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [
+              {
+                role: "user",
+                content: `Analyze the following food description:\n\n"${description}"\n\nBased on typical dietary restrictions, return a JSON object with:\n{\n  \"cholesterol\": true/false,\n  \"diabetes\": true/false,\n  \"contains_gluten\": true/false,\n  \"hypertension\": true/false,\n  \"lactose_free\": true/false,\n  \"nut_allergy\": true/false,\n  \"calories\": number // estimated total calories for the full portion (e.g. full pizza, full meal) — DO NOT give per slice or per serving\n}\n\nBe strict and medically accurate.`
+              },
+            ],
+            temperature: 0.4,
+          }),
+        });
+
+        const json = await response.json();
+        if (!response.ok) {
+          console.error("OpenAI error response:", json);
+          throw new Error("OpenAI API error");
+        }
+
+        const rawText = json.choices?.[0]?.message?.content;
+        if (!rawText) {
+          console.error("Invalid OpenAI response format:", json);
+          throw new Error("Invalid GPT response");
+        }
+
+        console.log("GPT Response Text:", rawText);
+
+        const jsonText = rawText.match(/{[\s\S]*}/)?.[0];
+        if (!jsonText) throw new Error("No JSON found in GPT response");
+
+        const result = JSON.parse(jsonText);
+
+        const tagData = {
+          cholesterol: result.cholesterol ?? false,
+          diabetes: result.diabetes ?? false,
+          contains_gluten: result.contains_gluten ?? false,
+          hypertension: result.hypertension ?? false,
+          lactose_free: result.lactose_free ?? false,
+          nut_allergy: result.nut_allergy ?? false,
+        };
+
+        console.log("Parsed GPT tags:", tagData);
+
+        setTags(tagData);
+        setCalories(String(result.calories ?? result.estimate_calories ?? ""));
+
+      } catch (err) {
+        console.error("GPT request failed:", err);
+        Alert.alert("Error", "Could not analyze item with AI.");
+      }
+
+      setLoading(false);
+    };
+
+    generateHealthData();
+  }, []);
+
+  const handleSubmit = async () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !name || !price || !calories) {
+      Alert.alert("Error", "Please fill out all required fields.");
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "food_items"), {
+        name,
+        description,
+        price: parseFloat(price as string),
+        calories: parseInt(calories),
+        restaurantId: uid,
+        ...tags,
+        allowed: true,
+      });
+
+      Alert.alert("Success", "Item created.");
+      router.replace("/restaurant-dashboard");
+    } catch (err) {
+      Alert.alert("Error", "Failed to create item.");
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" />
+        <Text style={{ marginTop: 20 }}>Analyzing item with ChatGPT...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Refine Item Details</Text>
+      <TextInput
+        placeholder="Calories"
+        value={calories}
+        onChangeText={setCalories}
+        keyboardType="numeric"
+        style={styles.input}
+      />
+
+      <Text style={styles.note}>Toggle ON if this food is ⚠️ NOT SAFE for people with:</Text>
+      {Object.entries(tags).map(([key, value]) => {
+        const typedKey = key as keyof typeof tags;
+        const label = key === 'contains_gluten' ? 'Contains Gluten' : key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        return (
+          <View key={key} style={styles.switchRow}>
+            <Text style={styles.label}>⚠️ {label}</Text>
+            <Switch value={value} onValueChange={() => toggleTag(typedKey)} />
+          </View>
+        );
+      })}
+
+      <Button title="Save Item" onPress={handleSubmit} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20 },
+  title: { fontSize: 20, fontWeight: "bold", marginBottom: 20 },
+  input: {
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+    paddingVertical: 8,
+    marginBottom: 15,
+  },
+  switchRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 10,
+  },
+  label: { fontSize: 16 },
+  note: {
+    fontStyle: "italic",
+    color: "#666",
+    marginBottom: 10,
+    fontSize: 14,
+  },
+});
