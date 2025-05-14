@@ -5,6 +5,7 @@ import { collection, onSnapshot, query, where, orderBy } from "firebase/firestor
 import { updateDoc, doc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { signOut } from "firebase/auth";
+import { getDoc } from "firebase/firestore";
 
 
 
@@ -20,23 +21,38 @@ export default function RestaurantDashboard() {
 
   useEffect(() => {
     if (!uid) return;
-
+  
     const q = query(
       collection(db, "orders"),
       where("restaurantId", "==", uid),
       orderBy("createdAt", "desc")
     );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newOrders = snapshot.docs.map((doc) => ({
+  
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const orderDocs = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data(),
+        ...(doc.data() as any),
       }));
-      setOrders(newOrders);
+  
+      // Fetch user data for each order (email and address)
+      const enrichedOrders = await Promise.all(
+        orderDocs.map(async (order) => {
+          try {
+            const userSnap = await getDoc(doc(db, "users", order.userId));
+            const userData = userSnap.exists() ? userSnap.data() : {};
+            return { ...order, customerEmail: userData.email, customerAddress: userData.address };
+          } catch {
+            return { ...order, customerEmail: "Unknown", customerAddress: "Unknown" };
+          }
+        })
+      );
+  
+      setOrders(enrichedOrders);
     });
-
+  
     return unsubscribe;
   }, [uid]);
+  
 
   const updateStatus = async (orderId: string, newStatus: string) => {
     try {
@@ -77,9 +93,10 @@ export default function RestaurantDashboard() {
     item.status === "completed" && { borderColor: "green", backgroundColor: "#E6FFE6" },
   ]}
 >
-
   <Text style={styles.bold}>Total: ${item.total?.toFixed(2)}</Text>
   <Text>Status: {item.status}</Text>
+  <Text>👤 {item.customerEmail}</Text>
+  <Text>📍 {item.customerAddress}</Text>
 
   {item.items?.map((food: any, i: number) => (
     <Text key={i}>• {food.name} × {food.quantity}</Text>
@@ -94,6 +111,7 @@ export default function RestaurantDashboard() {
     )}
   </View>
 </View>
+
 
         )}
       />

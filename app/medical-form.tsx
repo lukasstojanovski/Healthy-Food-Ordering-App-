@@ -11,6 +11,9 @@ export default function MedicalForm() {
     lactose_free: false,
     hypertension: false,
     cholesterol: false,
+    low_carb: false,
+    high_protein: false,
+    low_fat: false,
   });
 
   const [maxCalories, setMaxCalories] = useState("");

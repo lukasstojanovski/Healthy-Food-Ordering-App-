@@ -17,7 +17,7 @@ export default function CreateItemDetails() {
     diabetes: false,
     contains_gluten: false,
     hypertension: false,
-    lactose_free: false,
+    contains_lactose: false,
     nut_allergy: false,
   });
   const [loading, setLoading] = useState(true);
@@ -41,8 +41,16 @@ export default function CreateItemDetails() {
             messages: [
               {
                 role: "user",
-                content: `Analyze the following food description:\n\n"${description}"\n\nBased on typical dietary restrictions, return a JSON object with:\n{\n  \"cholesterol\": true/false,\n  \"diabetes\": true/false,\n  \"contains_gluten\": true/false,\n  \"hypertension\": true/false,\n  \"lactose_free\": true/false,\n  \"nut_allergy\": true/false,\n  \"calories\": number // estimated total calories for the full portion (e.g. full pizza, full meal) — DO NOT give per slice or per serving\n}\n\nBe strict and medically accurate.`
-              },
+                content: `Analyze the following food description for health restrictions:\n\n"${description}"\n\nReturn a JSON object with:\n{
+                  "cholesterol": true/false, // true = NOT safe for high cholesterol
+                  "diabetes": true/false,    // true = NOT safe for diabetics
+                  "contains_gluten": true/false, // true = contains gluten
+                  "hypertension": true/false, // true = NOT safe for high blood pressure
+                  "contains_lactose": true/false, // true = contains dairy
+                  "nut_allergy": true/false, // true = contains peanuts, tree nuts, or traces
+                  "calories": number // estimated for FULL meal
+                }\n\nBe strict. Assume peanut sauce contains gluten & peanuts unless stated otherwise.`
+                },
             ],
             temperature: 0.4,
           }),
@@ -72,7 +80,7 @@ export default function CreateItemDetails() {
           diabetes: result.diabetes ?? false,
           contains_gluten: result.contains_gluten ?? false,
           hypertension: result.hypertension ?? false,
-          lactose_free: result.lactose_free ?? false,
+          contains_lactose: result.contains_lactose ?? false,
           nut_allergy: result.nut_allergy ?? false,
         };
 

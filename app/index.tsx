@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Button, TouchableOpacity } from 'react-native';
 import { auth, db } from '../firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
 import { useRouter } from 'expo-router';
-
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const [restaurants, setRestaurants] = useState<any[]>([]);
@@ -21,15 +20,10 @@ export default function HomeScreen() {
     fetchRestaurants();
   }, []);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.replace('/login');
-  };
-
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => router.push(`/menu?restaurantId=${item.id}`)} // future: dynamic menu per restaurant
+      onPress={() => router.push(`/menu?restaurantId=${item.id}`)}
     >
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.cuisine}>Cuisine: {item.cuisine}</Text>
@@ -39,10 +33,12 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Button
-  title="View Order History"
-  onPress={() => router.push("/order-history")}
-/>
+      {/* Top Cart Icon */}
+      <View style={styles.topRow}>
+        <TouchableOpacity onPress={() => router.push("/cart")}>
+          <Ionicons name="cart-outline" size={30} color="black" />
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.title}>Suggested Restaurants</Text>
 
@@ -52,13 +48,21 @@ export default function HomeScreen() {
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 100 }}
       />
-      <Button title="Logout" onPress={handleLogout} />
+
+      {/* Bottom Go to Profile Button */}
+      <Button title="Go to Profile" onPress={() => router.push('/profile')} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   title: { fontSize: 24, textAlign: 'center', marginBottom: 10 },
   card: {
     borderWidth: 1,

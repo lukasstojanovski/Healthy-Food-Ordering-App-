@@ -12,10 +12,15 @@ export default function RootLayout() {
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const CartIconButton = () => (
-    <TouchableOpacity onPress={() => router.push("/cart")} style={{ marginRight: 15 }}>
-      <Ionicons name="cart-outline" size={24} color="black" />
-    </TouchableOpacity>
+  const HeaderButtons = () => (
+    <View style={{ flexDirection: 'row', gap: 15, marginRight: 15 }}>
+      <TouchableOpacity onPress={() => router.push("/profile")}>
+        <Ionicons name="person-outline" size={24} color="black" />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push("/cart")}>
+        <Ionicons name="cart-outline" size={24} color="black" />
+      </TouchableOpacity>
+    </View>
   );
 
   useEffect(() => {
@@ -55,7 +60,7 @@ export default function RootLayout() {
           name="menu"
           options={{
             title: "",
-            headerRight: () => <CartIconButton />,
+            headerRight: () => <HeaderButtons />,
           }}
         />
       </Stack>

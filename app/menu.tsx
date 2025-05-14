@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Button, Alert } from 'react-native';
 import { auth, db } from '../firebase';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
 import { useCart } from '../src/context/CartContext';
 
 export default function MenuScreen() {
@@ -12,7 +11,7 @@ export default function MenuScreen() {
   const [restaurantName, setRestaurantName] = useState('');
   const [showAll, setShowAll] = useState(false);
   const router = useRouter();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
 
   const fetchMenu = async () => {
     try {
@@ -28,8 +27,7 @@ export default function MenuScreen() {
         query(collection(db, 'restaurants'), where('__name__', '==', restaurantId))
       );
       if (!restaurantSnap.empty) {
-        const data = restaurantSnap.docs[0].data();
-        setRestaurantName(data.name);
+        setRestaurantName(restaurantSnap.docs[0].data().name);
       }
 
       const q = query(collection(db, 'food_items'), where('restaurantId', '==', restaurantId));
@@ -49,10 +47,12 @@ export default function MenuScreen() {
                 return false;
               }
             } else if (profile[condition] === true) {
-              const fieldName = condition === 'gluten_free' ? 'contains_gluten' : condition;
-              if (item[fieldName] === true) {
-                return false;
-              }
+              const fieldMap: Record<string, string> = {
+                gluten_free: 'contains_gluten',
+                lactose_free: 'contains_lactose',
+              };
+              const fieldName = fieldMap[condition] || condition;
+              if (item[fieldName] === true) return false;
             }
           }
           return true;
@@ -65,11 +65,6 @@ export default function MenuScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.replace('/login');
-  };
-
   useEffect(() => {
     fetchMenu();
   }, [restaurantId, showAll]);
@@ -78,13 +73,17 @@ export default function MenuScreen() {
     const warnings: string[] = [];
 
     if (item.contains_gluten) warnings.push("Gluten");
-    if (item.lactose_free) warnings.push("Lactose");
+    if (item.contains_lactose) warnings.push("Lactose");
     if (item.nut_allergy) warnings.push("Nuts");
     if (item.cholesterol) warnings.push("High Cholesterol");
     if (item.diabetes) warnings.push("High Sugar");
     if (item.hypertension) warnings.push("High Sodium");
+    if (item.low_carb) warnings.push("Not Low Carb");
+    if (item.high_protein) warnings.push("Low Protein");
+    if (item.low_fat) warnings.push("High Fat");
 
     const isSafe = warnings.length === 0;
+    const quantityInCart = cartItems.find(i => i.id === item.id)?.quantity || 0;
 
     return (
       <View style={styles.card}>
@@ -99,7 +98,12 @@ export default function MenuScreen() {
           <Text style={styles.warning}>⚠️ Contains: {warnings.join(', ')}</Text>
         )}
 
-        <Button title="Add to Cart" onPress={() => addToCart(item)} />
+        <View style={styles.cartRow}>
+          <Button title="Add to Cart" onPress={() => addToCart(item)} />
+          {quantityInCart > 0 && (
+            <Text style={styles.cartCount}>🛒 {quantityInCart} in cart</Text>
+          )}
+        </View>
       </View>
     );
   };
@@ -110,7 +114,7 @@ export default function MenuScreen() {
 
       <Button
         title={showAll ? "Show Safe Items Only" : "Show All Items"}
-        onPress={() => setShowAll((prev) => !prev)}
+        onPress={() => setShowAll(prev => !prev)}
       />
 
       <FlatList
@@ -120,7 +124,8 @@ export default function MenuScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
       />
 
-      <Button title="Logout" onPress={handleLogout} />
+      {/* 👇 Go to Cart button at the bottom */}
+      <Button title="Go to Cart 🛒" onPress={() => router.push('/cart')} />
     </View>
   );
 }
@@ -145,5 +150,16 @@ const styles = StyleSheet.create({
     color: "green",
     fontWeight: "500",
     marginVertical: 5,
+  },
+  cartRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  cartCount: {
+    marginLeft: 10,
+    color: '#444',
+    fontWeight: 'bold',
   },
 });
