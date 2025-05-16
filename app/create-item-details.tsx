@@ -19,6 +19,9 @@ export default function CreateItemDetails() {
     hypertension: false,
     contains_lactose: false,
     nut_allergy: false,
+    low_carb: false,
+    high_protein: false,
+    low_fat: false,
   });
   const [loading, setLoading] = useState(true);
 
@@ -49,51 +52,44 @@ export default function CreateItemDetails() {
                   "contains_lactose": true/false, // true = contains dairy
                   "nut_allergy": true/false, // true = contains peanuts, tree nuts, or traces
                   "calories": number // estimated for FULL meal
-                }\n\nBe strict. Assume peanut sauce contains gluten & peanuts unless stated otherwise.`
-                },
+                  "low_carb": true/false,
+                  "high_protein": true/false,
+                  "low_fat": true/false,
+                  "calories": number
+}\n\nBe strict. Assume peanut sauce contains gluten and nuts unless stated otherwise. Estimate calories for the *full meal*, not per portion.`
+              },
             ],
             temperature: 0.4,
           }),
         });
 
         const json = await response.json();
-        if (!response.ok) {
-          console.error("OpenAI error response:", json);
-          throw new Error("OpenAI API error");
-        }
+        if (!response.ok) throw new Error("OpenAI API error");
 
         const rawText = json.choices?.[0]?.message?.content;
-        if (!rawText) {
-          console.error("Invalid OpenAI response format:", json);
-          throw new Error("Invalid GPT response");
-        }
-
-        console.log("GPT Response Text:", rawText);
-
-        const jsonText = rawText.match(/{[\s\S]*}/)?.[0];
-        if (!jsonText) throw new Error("No JSON found in GPT response");
+        const jsonText = rawText?.match(/{[\s\S]*}/)?.[0];
+        if (!jsonText) throw new Error("Invalid GPT response");
 
         const result = JSON.parse(jsonText);
+        console.log("Parsed GPT tags:", result);
 
-        const tagData = {
+        setTags({
           cholesterol: result.cholesterol ?? false,
           diabetes: result.diabetes ?? false,
           contains_gluten: result.contains_gluten ?? false,
           hypertension: result.hypertension ?? false,
           contains_lactose: result.contains_lactose ?? false,
           nut_allergy: result.nut_allergy ?? false,
-        };
+          low_carb: result.low_carb ?? false,
+          high_protein: result.high_protein ?? false,
+          low_fat: result.low_fat ?? false,
+        });
 
-        console.log("Parsed GPT tags:", tagData);
-
-        setTags(tagData);
-        setCalories(String(result.calories ?? result.estimate_calories ?? ""));
-
+        setCalories(String(result.calories ?? ""));
       } catch (err) {
         console.error("GPT request failed:", err);
         Alert.alert("Error", "Could not analyze item with AI.");
       }
-
       setLoading(false);
     };
 
@@ -144,11 +140,10 @@ export default function CreateItemDetails() {
         keyboardType="numeric"
         style={styles.input}
       />
-
-      <Text style={styles.note}>Toggle ON if this food is ⚠️ NOT SAFE for people with:</Text>
+      <Text style={styles.note}>Toggle ON if this food is ⚠️ NOT SAFE or matches dietary goals:</Text>
       {Object.entries(tags).map(([key, value]) => {
         const typedKey = key as keyof typeof tags;
-        const label = key === 'contains_gluten' ? 'Contains Gluten' : key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
         return (
           <View key={key} style={styles.switchRow}>
             <Text style={styles.label}>⚠️ {label}</Text>
@@ -184,3 +179,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
+

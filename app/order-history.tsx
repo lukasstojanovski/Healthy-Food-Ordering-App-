@@ -17,14 +17,12 @@ export default function OrderHistory() {
         orderBy("createdAt", "desc")
       );
 
-
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setOrders(data);
     };
 
     fetchOrders();
-
   }, []);
 
   return (
@@ -33,22 +31,43 @@ export default function OrderHistory() {
       <FlatList
         data={orders}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <View
-            style={[
+        renderItem={({ item }) => {
+          let deliveryTimeText = null;
+
+if (item.createdAt && item.prepTimeMinutes && item.status !== "completed") {
+  const orderDate = item.createdAt.toDate?.() ?? new Date(item.createdAt.seconds * 1000);
+  const estimatedDeliveryDate = new Date(orderDate.getTime() + (item.prepTimeMinutes + 15) * 60000);
+
+  deliveryTimeText = `🚚 Estimated Delivery: ${estimatedDeliveryDate.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  })}`;
+}
+
+
+          return (
+            <View
+              style={[
                 styles.card,
                 item.status === "new" && { borderColor: "orange", backgroundColor: "#FFF7E6" },
                 item.status === "accepted" && { borderColor: "#1E90FF", backgroundColor: "#E6F0FF" },
                 item.status === "completed" && { borderColor: "green", backgroundColor: "#E6FFE6" },
               ]}
-          >
-            <Text>Status: {item.status}</Text>
-            {item.items.map((food: any, i: number) => (
-              <Text key={i}>• {food.name} × {food.quantity}</Text>
-            ))}
-            <Text style={styles.total}>Total: ${item.total?.toFixed(2)}</Text>
-          </View>
-        )}
+            >
+              <Text>Status: {item.status}</Text>
+
+              {item.items.map((food: any, i: number) => (
+                <Text key={i}>• {food.name} × {food.quantity}</Text>
+              ))}
+
+              {deliveryTimeText && (
+                <Text style={styles.delivery}>{deliveryTimeText}</Text>
+              )}
+
+              <Text style={styles.total}>Total: ${item.total?.toFixed(2)}</Text>
+            </View>
+          );
+        }}
       />
     </View>
   );
@@ -64,4 +83,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   total: { marginTop: 5, fontWeight: 'bold' },
+  delivery: {
+    marginTop: 5,
+    fontStyle: 'italic',
+    color: '#444',
+  },
 });
