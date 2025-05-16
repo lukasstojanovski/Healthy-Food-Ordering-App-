@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Alert, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { auth, db } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
@@ -42,41 +42,143 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Profile</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.subtitle}>Manage your account settings</Text>
+      </View>
 
-      <Text style={styles.label}>Address / Location</Text>
-      <TextInput
-        placeholder="Enter your location"
-        value={address}
-        onChangeText={setAddress}
-        style={styles.input}
-      />
+      <ScrollView style={styles.content}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Location</Text>
+          <View style={styles.inputWrapper}>
+            <Text style={styles.label}>Delivery Address</Text>
+            <TextInput
+              placeholder="Enter your delivery location"
+              value={address}
+              onChangeText={setAddress}
+              style={styles.input}
+              placeholderTextColor="#999"
+            />
+          </View>
+          <TouchableOpacity 
+            style={styles.saveButton}
+            onPress={handleSave}
+          >
+            <Text style={styles.saveButtonText}>Save Address</Text>
+          </TouchableOpacity>
+        </View>
 
-      <Button title="Save Address" onPress={handleSave} />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={() => router.push('/medical-form')}
+          >
+            <Text style={styles.menuButtonText}>Update Medical Profile</Text>
+          </TouchableOpacity>
 
-      <View style={{ height: 20 }} />
-      <Button title="Update Medical Profile" onPress={() => router.push('/medical-form')} />
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={() => router.push('/order-history')}
+          >
+            <Text style={styles.menuButtonText}>View Order History</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View style={{ height: 20 }} />
-      <Button title="View Order History" onPress={() => router.push('/order-history')} />
-
-      <View style={{ height: 20 }} />
-      <Button title="Logout" color="#b22222" onPress={handleLogout} />
-    </View>
+        <TouchableOpacity 
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: 'center' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 30, textAlign: 'center' },
-  label: { marginBottom: 5 },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666666',
+  },
+  content: {
+    flex: 1,
+  },
+  section: {
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 16,
+  },
+  inputWrapper: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 15,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  saveButton: {
+    backgroundColor: '#1A1A1A',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  menuButton: {
+    backgroundColor: '#F5F5F5',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  menuButtonText: {
+    color: '#1A1A1A',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  logoutButton: {
+    margin: 24,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#B22222',
+  },
+  logoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

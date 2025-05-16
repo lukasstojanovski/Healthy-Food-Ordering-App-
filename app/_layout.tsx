@@ -1,6 +1,6 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { CartProvider } from "../src/context/CartContext";
-import { TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { TouchableOpacity, View, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -13,12 +13,18 @@ export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const HeaderButtons = () => (
-    <View style={{ flexDirection: 'row', gap: 15, marginRight: 15 }}>
-      <TouchableOpacity onPress={() => router.push("/profile")}>
-        <Ionicons name="person-outline" size={24} color="black" />
+    <View style={styles.headerButtons}>
+      <TouchableOpacity 
+        style={styles.headerButton}
+        onPress={() => router.push("/profile")}
+      >
+        <Ionicons name="person-outline" size={24} color="#1A1A1A" />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push("/cart")}>
-        <Ionicons name="cart-outline" size={24} color="black" />
+      <TouchableOpacity 
+        style={styles.headerButton}
+        onPress={() => router.push("/cart")}
+      >
+        <Ionicons name="cart-outline" size={24} color="#1A1A1A" />
       </TouchableOpacity>
     </View>
   );
@@ -47,23 +53,76 @@ export default function RootLayout() {
 
   if (!authChecked) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0066CC" />
       </View>
     );
   }
 
   return (
     <CartProvider>
-      <Stack>
-        <Stack.Screen
-          name="menu"
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#FFFFFF',
+          },
+          headerTitle: () => null,
+          headerRight: () => <HeaderButtons />,
+          headerShadowVisible: false,
+          headerBackVisible: true,
+          headerTintColor: '#1A1A1A',
+        }}
+      >
+        <Stack.Screen 
+          name="index"
           options={{
-            title: "",
-            headerRight: () => <HeaderButtons />,
+            headerLeft: () => null,
+          }}
+        />
+        <Stack.Screen name="menu" />
+        <Stack.Screen name="cart" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="medical-form" />
+        <Stack.Screen name="order-history" />
+        <Stack.Screen name="restaurant-dashboard" />
+        <Stack.Screen name="admin" />
+        <Stack.Screen name="create-item" />
+        <Stack.Screen name="create-item-details" />
+        <Stack.Screen 
+          name="login"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="register"
+          options={{
+            headerShown: false,
           }}
         />
       </Stack>
     </CartProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 16,
+    marginRight: 16,
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, Switch, Button, Alert, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, Switch, Alert, StyleSheet, ActivityIndicator, SafeAreaView, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { collection, addDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import Constants from 'expo-constants';
@@ -103,6 +103,11 @@ export default function CreateItemDetails() {
       return;
     }
 
+    if (isNaN(Number(calories)) || Number(calories) <= 0) {
+      Alert.alert("Error", "Please enter a valid calorie count.");
+      return;
+    }
+
     try {
       await addDoc(collection(db, "food_items"), {
         name,
@@ -114,7 +119,7 @@ export default function CreateItemDetails() {
         allowed: true,
       });
 
-      Alert.alert("Success", "Item created.");
+      Alert.alert("Success", "Item created successfully!");
       router.replace("/restaurant-dashboard");
     } catch (err) {
       Alert.alert("Error", "Failed to create item.");
@@ -123,60 +128,179 @@ export default function CreateItemDetails() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 20 }}>Analyzing item with ChatGPT...</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0066CC" />
+          <Text style={styles.loadingText}>Analyzing item with AI...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Refine Item Details</Text>
-      <TextInput
-        placeholder="Calories"
-        value={calories}
-        onChangeText={setCalories}
-        keyboardType="numeric"
-        style={styles.input}
-      />
-      <Text style={styles.note}>Toggle ON if this food is ⚠️ NOT SAFE or matches dietary goals:</Text>
-      {Object.entries(tags).map(([key, value]) => {
-        const typedKey = key as keyof typeof tags;
-        const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-        return (
-          <View key={key} style={styles.switchRow}>
-            <Text style={styles.label}>⚠️ {label}</Text>
-            <Switch value={value} onValueChange={() => toggleTag(typedKey)} />
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Refine Item Details</Text>
+            <Text style={styles.subtitle}>Review and adjust health information</Text>
           </View>
-        );
-      })}
 
-      <Button title="Save Item" onPress={handleSubmit} />
-    </View>
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Calories</Text>
+              <TextInput
+                placeholder="Enter calorie count"
+                value={calories}
+                onChangeText={setCalories}
+                keyboardType="numeric"
+                style={styles.input}
+                placeholderTextColor="#999999"
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Health Restrictions</Text>
+              <Text style={styles.note}>Toggle ON if this food is ⚠️ NOT SAFE or matches dietary goals</Text>
+              
+              <View style={styles.tagsContainer}>
+                {Object.entries(tags).map(([key, value]) => {
+                  const typedKey = key as keyof typeof tags;
+                  const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+                  return (
+                    <View key={key} style={styles.switchRow}>
+                      <Text style={styles.switchLabel}>⚠️ {label}</Text>
+                      <Switch 
+                        value={value} 
+                        onValueChange={() => toggleTag(typedKey)}
+                        trackColor={{ false: '#E0E0E0', true: '#0066CC' }}
+                        thumbColor={value ? '#FFFFFF' : '#FFFFFF'}
+                      />
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.submitButton}
+              onPress={handleSubmit}
+            >
+              <Text style={styles.submitButtonText}>Save Menu Item</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 20, fontWeight: "bold", marginBottom: 20 },
-  input: {
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  keyboardAvoid: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666666',
+    marginTop: 16,
+  },
+  header: {
+    padding: 24,
     borderBottomWidth: 1,
-    borderColor: "#ccc",
-    paddingVertical: 8,
-    marginBottom: 15,
+    borderBottomColor: '#F5F5F5',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666666',
+  },
+  form: {
+    padding: 24,
+  },
+  inputGroup: {
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 16,
+    fontSize: 16,
+    color: '#1A1A1A',
+    backgroundColor: '#F5F5F5',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  note: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
+  tagsContainer: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 16,
   },
   switchRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
-  label: { fontSize: 16 },
-  note: {
-    fontStyle: "italic",
-    color: "#666",
-    marginBottom: 10,
-    fontSize: 14,
+  switchLabel: {
+    fontSize: 16,
+    color: '#1A1A1A',
+    flex: 1,
+    marginRight: 16,
+  },
+  submitButton: {
+    backgroundColor: '#0066CC',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Button, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, TouchableOpacity, SafeAreaView } from 'react-native';
 import { auth, db } from '../firebase';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { useCart } from '../src/context/CartContext';
@@ -87,10 +87,13 @@ export default function MenuScreen() {
 
     return (
       <View style={styles.card}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text>Ingredients: {item.ingredients?.join(', ')}</Text>
-        <Text>Calories: {item.calories ?? 'N/A'}</Text>
-        <Text>Price: ${item.price?.toFixed(2)}</Text>
+        <View style={styles.cardHeader}>
+          <Text style={styles.name}>{item.name}</Text>
+          <Text style={styles.price}>${item.price?.toFixed(2)}</Text>
+        </View>
+
+        <Text style={styles.ingredients}>Ingredients: {item.ingredients?.join(', ')}</Text>
+        <Text style={styles.calories}>Calories: {item.calories ?? 'N/A'}</Text>
 
         {isSafe ? (
           <Text style={styles.safe}>✅ Safe for All</Text>
@@ -99,7 +102,12 @@ export default function MenuScreen() {
         )}
 
         <View style={styles.cartRow}>
-          <Button title="Add to Cart" onPress={() => addToCart(item)} />
+          <TouchableOpacity 
+            style={styles.addButton}
+            onPress={() => addToCart(item)}
+          >
+            <Text style={styles.addButtonText}>Add to Cart</Text>
+          </TouchableOpacity>
           {quantityInCart > 0 && (
             <Text style={styles.cartCount}>🛒 {quantityInCart} in cart</Text>
           )}
@@ -109,57 +117,178 @@ export default function MenuScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{restaurantName}'s Menu</Text>
-
-      <Button
-        title={showAll ? "Show Safe Items Only" : "Show All Items"}
-        onPress={() => setShowAll(prev => !prev)}
-      />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>{restaurantName}'s Menu</Text>
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => setShowAll(prev => !prev)}
+        >
+          <Text style={styles.filterButtonText}>
+            {showAll ? "Show Safe Items Only" : "Show All Items"}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={styles.listContent}
       />
 
-      {/* 👇 Go to Cart button at the bottom */}
-      <Button title="Go to Cart 🛒" onPress={() => router.push('/cart')} />
-    </View>
+      <TouchableOpacity 
+        style={styles.cartButton}
+        onPress={() => router.push('/cart')}
+      >
+        <Text style={styles.cartButtonText}>Go to Cart 🛒</Text>
+        {cartItems.length > 0 && (
+          <View style={styles.cartCountBadge}>
+            <Text style={styles.cartCountText}>{cartItems.length}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 22, textAlign: 'center', marginBottom: 15 },
-  card: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 12,
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  name: { fontSize: 18, fontWeight: '600' },
+  header: {
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 16,
+  },
+  filterButton: {
+    backgroundColor: '#F5F5F5',
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  filterButtonText: {
+    color: '#1A1A1A',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  listContent: {
+    padding: 24,
+    paddingBottom: 100,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#F5F5F5',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    flex: 1,
+  },
+  price: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  ingredients: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 4,
+  },
+  calories: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 8,
+  },
   warning: {
-    color: "#b22222",
-    fontWeight: "500",
-    marginVertical: 5,
+    color: '#B22222',
+    fontSize: 14,
+    fontWeight: '500',
+    marginVertical: 8,
   },
   safe: {
-    color: "green",
-    fontWeight: "500",
-    marginVertical: 5,
+    color: '#2E7D32',
+    fontSize: 14,
+    fontWeight: '500',
+    marginVertical: 8,
   },
   cartRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 12,
+  },
+  addButton: {
+    backgroundColor: '#1A1A1A',
+    padding: 12,
+    borderRadius: 12,
+    flex: 1,
+    marginRight: 12,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   cartCount: {
-    marginLeft: 10,
-    color: '#444',
-    fontWeight: 'bold',
+    color: '#666666',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  cartButton: {
+    position: 'absolute',
+    bottom: 24,
+    left: 24,
+    right: 24,
+    backgroundColor: '#0066CC',
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  cartButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cartCountBadge: {
+    position: 'absolute',
+    right: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#0066CC',
+  },
+  cartCountText: {
+    color: '#0066CC',
+    fontSize: 14,
+    fontWeight: '600',
+    paddingHorizontal: 6,
   },
 });

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Alert, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, TextInput, Alert, StyleSheet, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
-
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -13,11 +12,9 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      // Sign in the user
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
   
-      // Fetch user role from Firestore
       const userDocRef = doc(db, 'users', uid);
       const userSnap = await getDoc(userDocRef);
   
@@ -29,38 +26,140 @@ export default function LoginScreen() {
       const userData = userSnap.data();
       const role = userData.role;
   
-      // Route based on role
       if (role === 'admin') {
         router.replace('/admin');
       } else if (role === 'restaurant') {
         router.replace('/restaurant-dashboard');
       } else if (role === 'customer') {
-          router.replace('/');
-        } 
-      
-  
+        router.replace('/');
+      }
     } catch (error: any) {
       Alert.alert('Login Failed', error.message);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} autoCapitalize="none" />
-      <TextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
-      <Button title="Login" onPress={handleLogin} />
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <View style={styles.contentContainer}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>Sign In</Text>
+          <Text style={styles.subtitle}>Welcome back to your account</Text>
+        </View>
 
-      <TouchableOpacity onPress={() => router.push('/register')}>
-        <Text style={styles.link}>Don't have an account? Register</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.formContainer}>
+          <View style={styles.inputWrapper}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput 
+              value={email} 
+              onChangeText={setEmail} 
+              style={styles.input} 
+              autoCapitalize="none"
+              placeholderTextColor="#999"
+              placeholder="Enter your email"
+            />
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput 
+              value={password} 
+              onChangeText={setPassword} 
+              secureTextEntry 
+              style={styles.input}
+              placeholderTextColor="#999"
+              placeholder="Enter your password"
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={styles.loginButton}
+            onPress={handleLogin}
+          >
+            <Text style={styles.loginButtonText}>Continue</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            onPress={() => router.push('/register')}
+            style={styles.registerContainer}
+          >
+            <Text style={styles.registerText}>Don't have an account? </Text>
+            <Text style={styles.registerLink}>Sign up</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  input: { borderWidth: 1, marginVertical: 10, padding: 10, borderRadius: 5 },
-  title: { fontSize: 24, marginBottom: 20, textAlign: 'center' },
-  link: { marginTop: 15, textAlign: 'center', color: 'blue' },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'center',
+  },
+  headerContainer: {
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666666',
+    lineHeight: 22,
+  },
+  formContainer: {
+    gap: 20,
+  },
+  inputWrapper: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
+  },
+  input: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  loginButton: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  registerText: {
+    color: '#666666',
+    fontSize: 14,
+  },
+  registerLink: {
+    color: '#1A1A1A',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });

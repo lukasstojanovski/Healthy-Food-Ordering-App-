@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Alert, StyleSheet, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, TextInput, Alert, StyleSheet, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { useRouter } from 'expo-router';
@@ -43,27 +43,179 @@ export default function RegisterScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Register</Text>
-      <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} autoCapitalize="none" />
-      <TextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
-      <TextInput placeholder="Phone Number" value={phone} onChangeText={setPhone} style={styles.input} keyboardType="phone-pad" />
-      <TextInput placeholder="Address (optional)" value={address} onChangeText={setAddress} style={styles.input} />
-      <TextInput placeholder="Height (cm)" value={height} onChangeText={setHeight} style={styles.input} keyboardType="numeric" />
-      <TextInput placeholder="Weight (kg)" value={weight} onChangeText={setWeight} style={styles.input} keyboardType="numeric" />
-      
-      <Button title="Register" onPress={handleRegister} />
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.contentContainer}>
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Join us to start your healthy journey</Text>
+          </View>
 
-      <TouchableOpacity onPress={() => router.push('/login')}>
-        <Text style={styles.link}>Already have an account? Login</Text>
-      </TouchableOpacity>
-    </ScrollView>
+          <View style={styles.formContainer}>
+            <View style={styles.inputWrapper}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput 
+                value={email} 
+                onChangeText={setEmail} 
+                style={styles.input} 
+                autoCapitalize="none"
+                placeholderTextColor="#999"
+                placeholder="Enter your email"
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput 
+                value={password} 
+                onChangeText={setPassword} 
+                secureTextEntry 
+                style={styles.input}
+                placeholderTextColor="#999"
+                placeholder="Create a password"
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.label}>Phone Number</Text>
+              <TextInput 
+                value={phone} 
+                onChangeText={setPhone} 
+                style={styles.input}
+                keyboardType="phone-pad"
+                placeholderTextColor="#999"
+                placeholder="Enter your phone number"
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.label}>Address (Optional)</Text>
+              <TextInput 
+                value={address} 
+                onChangeText={setAddress} 
+                style={styles.input}
+                placeholderTextColor="#999"
+                placeholder="Enter your address"
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.label}>Height (cm)</Text>
+              <TextInput 
+                value={height} 
+                onChangeText={setHeight} 
+                style={styles.input}
+                keyboardType="numeric"
+                placeholderTextColor="#999"
+                placeholder="Enter your height"
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.label}>Weight (kg)</Text>
+              <TextInput 
+                value={weight} 
+                onChangeText={setWeight} 
+                style={styles.input}
+                keyboardType="numeric"
+                placeholderTextColor="#999"
+                placeholder="Enter your weight"
+              />
+            </View>
+
+            <TouchableOpacity 
+              style={styles.registerButton}
+              onPress={handleRegister}
+            >
+              <Text style={styles.registerButtonText}>Create Account</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => router.push('/login')}
+              style={styles.loginContainer}
+            >
+              <Text style={styles.loginText}>Already have an account? </Text>
+              <Text style={styles.loginLink}>Sign in</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, justifyContent: 'center', padding: 20 },
-  input: { borderWidth: 1, marginVertical: 10, padding: 10, borderRadius: 5 },
-  title: { fontSize: 24, marginBottom: 20, textAlign: 'center' },
-  link: { marginTop: 15, textAlign: 'center', color: 'blue' },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'center',
+  },
+  headerContainer: {
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666666',
+    lineHeight: 22,
+  },
+  formContainer: {
+    gap: 20,
+  },
+  inputWrapper: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
+  },
+  input: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  registerButton: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  registerButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  loginText: {
+    color: '#666666',
+    fontSize: 14,
+  },
+  loginLink: {
+    color: '#1A1A1A',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
