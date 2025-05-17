@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, ActivityIndicator, Modal, Pressable } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, ActivityIndicator, Modal, Pressable, TextInput } from 'react-native';
 import { auth, db } from '../firebase';
 import { collection, getDocs, query, where, onSnapshot, doc, getDoc, DocumentData } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
@@ -17,9 +17,11 @@ interface Order {
 
 export default function HomeScreen() {
   const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [filteredRestaurants, setFilteredRestaurants] = useState<any[]>([]);
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const { colors, isDark } = useTheme();
 
@@ -30,6 +32,7 @@ export default function HomeScreen() {
         const snapshot = await getDocs(q);
         const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setRestaurants(list);
+        setFilteredRestaurants(list);
       } catch (error) {
         console.error('Error fetching restaurants:', error);
       } finally {
@@ -39,6 +42,20 @@ export default function HomeScreen() {
 
     fetchRestaurants();
   }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredRestaurants(restaurants);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = restaurants.filter(restaurant => 
+      restaurant.name.toLowerCase().includes(query) ||
+      restaurant.cuisine.toLowerCase().includes(query)
+    );
+    setFilteredRestaurants(filtered);
+  }, [searchQuery, restaurants]);
 
   useEffect(() => {
     const userId = auth.currentUser?.uid;
@@ -160,17 +177,40 @@ export default function HomeScreen() {
         <View style={[styles.headerDecoration, { backgroundColor: colors.primary }]} />
       </View>
 
-      {restaurants.length === 0 ? (
+      <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.searchInputContainer, { backgroundColor: colors.background }]}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.text }]}
+            placeholder="Search restaurants or cuisines..."
+            placeholderTextColor={colors.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              style={styles.clearButton}
+            >
+              <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {filteredRestaurants.length === 0 ? (
         <View style={styles.emptyContainer}>
           <View style={[styles.emptyIconContainer, { backgroundColor: colors.primaryLight }]}>
-            <Ionicons name="restaurant-outline" size={48} color={colors.primary} />
+            <Ionicons name="search-outline" size={48} color={colors.primary} />
           </View>
-          <Text style={[styles.emptyText, { color: colors.text }]}>No restaurants available</Text>
-          <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>Check back later for updates</Text>
+          <Text style={[styles.emptyText, { color: colors.text }]}>No restaurants found</Text>
+          <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+            Try adjusting your search
+          </Text>
         </View>
       ) : (
         <FlatList
-          data={restaurants}
+          data={filteredRestaurants}
           keyExtractor={item => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
@@ -193,17 +233,6 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
       )}
-
-      <TouchableOpacity 
-        style={[styles.profileButton, { backgroundColor: colors.primary }]}
-        onPress={() => router.push('/profile')}
-        activeOpacity={0.7}
-      >
-        <View style={styles.profileButtonContent}>
-          <Ionicons name="person-outline" size={20} color="#FFFFFF" />
-          <Text style={styles.profileButtonText}>Profile</Text>
-        </View>
-      </TouchableOpacity>
 
       <Modal
         animationType="slide"
@@ -553,5 +582,27 @@ const styles = StyleSheet.create({
   activeOrderTime: {
     fontSize: 14,
     color: '#666666',
+  },
+  searchContainer: {
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 16,
+    padding: 0,
+  },
+  clearButton: {
+    padding: 4,
   },
 });

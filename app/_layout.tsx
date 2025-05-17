@@ -1,11 +1,12 @@
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Tabs, Stack, useRouter, useSegments } from "expo-router";
 import { CartProvider } from "../src/context/CartContext";
-import { TouchableOpacity, View, ActivityIndicator, StyleSheet, Text } from "react-native";
+import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { doc, getDoc } from "firebase/firestore";
 
 function RootLayoutNav() {
   const router = useRouter();
@@ -14,26 +15,18 @@ function RootLayoutNav() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { colors } = useTheme();
-
-  const HeaderButtons = () => (
-    <View style={styles.headerButtons}>
-      <TouchableOpacity 
-        style={[styles.headerButton, { backgroundColor: colors.background }]}
-        onPress={() => router.push("/profile")}
-      >
-        <Ionicons name="person-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={[styles.headerButton, { backgroundColor: colors.background }]}
-        onPress={() => router.push("/cart")}
-      >
-        <Ionicons name="cart-outline" size={24} color={colors.text} />
-      </TouchableOpacity>
-    </View>
-  );
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setUserRole(userDoc.data().role);
+        }
+      } else {
+        setUserRole(null);
+      }
       setIsAuthenticated(!!user);
       setAuthChecked(true);
       setIsLoading(false);
@@ -51,9 +44,15 @@ function RootLayoutNav() {
     }
 
     if (isAuthenticated && inAuthGroup) {
-      router.replace("/");
+      if (userRole === 'admin') {
+        router.replace("/admin");
+      } else if (userRole === 'restaurant') {
+        router.replace("/restaurant-dashboard");
+      } else {
+        router.replace("/");
+      }
     }
-  }, [segments, authChecked, isAuthenticated]);
+  }, [segments, authChecked, isAuthenticated, userRole]);
 
   if (isLoading) {
     return (
@@ -63,48 +62,171 @@ function RootLayoutNav() {
     );
   }
 
-  return (
-    <CartProvider>
+  if (!isAuthenticated) {
+    return (
       <Stack
         screenOptions={{
-          headerStyle: {
-            backgroundColor: colors.card,
-          },
-          headerTitle: () => null,
-          headerRight: () => <HeaderButtons />,
-          headerShadowVisible: false,
-          headerBackVisible: true,
-          headerTintColor: colors.text,
+          headerShown: false,
+          animation: 'slide_from_right',
+          animationDuration: 200,
+          contentStyle: { backgroundColor: colors.background },
+          presentation: 'card',
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          animationTypeForReplace: 'push',
         }}
       >
         <Stack.Screen 
-          name="index"
-          options={{
-            headerLeft: () => null,
-          }}
-        />
-        <Stack.Screen name="menu" />
-        <Stack.Screen name="cart" />
-        <Stack.Screen name="profile" />
-        <Stack.Screen name="medical-form" />
-        <Stack.Screen name="order-history" />
-        <Stack.Screen name="restaurant-dashboard" />
-        <Stack.Screen name="admin" />
-        <Stack.Screen name="create-item" />
-        <Stack.Screen name="create-item-details" />
-        <Stack.Screen 
           name="login"
           options={{
-            headerShown: false,
+            animation: 'fade',
           }}
         />
         <Stack.Screen 
           name="register"
           options={{
-            headerShown: false,
+            animation: 'slide_from_right',
           }}
         />
       </Stack>
+    );
+  }
+
+  if (userRole === 'admin') {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="admin" />
+      </Stack>
+    );
+  }
+
+  if (userRole === 'restaurant') {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="restaurant-dashboard" />
+        <Stack.Screen name="create-item" />
+      </Stack>
+    );
+  }
+
+  return (
+    <CartProvider>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: {
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            height: 60,
+            paddingBottom: 8,
+            paddingTop: 8,
+            elevation: 0,
+            shadowOpacity: 0,
+          },
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.textSecondary,
+          tabBarShowLabel: true,
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: '500',
+          },
+          tabBarHideOnKeyboard: true,
+        }}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Home",
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons 
+                name={focused ? "home" : "home-outline"} 
+                size={size} 
+                color={color} 
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="cart"
+          options={{
+            title: "Cart",
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons 
+                name={focused ? "cart" : "cart-outline"} 
+                size={size} 
+                color={color} 
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profile",
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons 
+                name={focused ? "person" : "person-outline"} 
+                size={size} 
+                color={color} 
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="menu"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="medical-form"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="order-history"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="restaurant-dashboard"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="admin"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="create-item"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="create-item-details"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="login"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="register"
+          options={{
+            href: null,
+          }}
+        />
+      </Tabs>
     </CartProvider>
   );
 }
@@ -122,18 +244,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    gap: 16,
-    marginRight: 16,
-  },
-  headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
   },
 });

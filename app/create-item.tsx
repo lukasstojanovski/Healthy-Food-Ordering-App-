@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { View, Text, TextInput, Alert, StyleSheet, SafeAreaView, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "./context/ThemeContext";
 
 export default function CreateItem() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-
   const router = useRouter();
+  const { colors } = useTheme();
 
   const handleNext = () => {
     if (!name || !description || !price) {
@@ -31,57 +33,75 @@ export default function CreateItem() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Create New Menu Item</Text>
-            <Text style={styles.subtitle}>Add basic information about your dish</Text>
+          <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={[styles.title, { color: colors.text }]}>Create New Menu Item</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Add basic information about your dish</Text>
           </View>
 
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Item Name</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Item Name</Text>
               <TextInput
                 placeholder="Enter item name"
                 value={name}
                 onChangeText={setName}
-                style={styles.input}
-                placeholderTextColor="#999999"
+                style={[styles.input, { 
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderColor: colors.border
+                }]}
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Description</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Description</Text>
               <TextInput
                 placeholder="Enter description and ingredients"
                 value={description}
                 onChangeText={setDescription}
-                style={[styles.input, styles.textArea]}
+                style={[styles.input, styles.textArea, { 
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderColor: colors.border
+                }]}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
-                placeholderTextColor="#999999"
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Price ($)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Price ($)</Text>
               <TextInput
                 placeholder="Enter price"
                 value={price}
                 onChangeText={setPrice}
                 keyboardType="decimal-pad"
-                style={styles.input}
-                placeholderTextColor="#999999"
+                style={[styles.input, { 
+                  backgroundColor: colors.background,
+                  color: colors.text,
+                  borderColor: colors.border
+                }]}
+                placeholderTextColor={colors.textSecondary}
               />
             </View>
 
             <TouchableOpacity 
-              style={styles.nextButton}
+              style={[styles.nextButton, { backgroundColor: colors.primary }]}
               onPress={handleNext}
             >
               <Text style={styles.nextButtonText}>Continue to Details</Text>
@@ -96,7 +116,6 @@ export default function CreateItem() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   keyboardAvoid: {
     flex: 1,
@@ -107,17 +126,17 @@ const styles = StyleSheet.create({
   header: {
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+  },
+  backButton: {
+    marginBottom: 16,
   },
   title: {
     fontSize: 28,
     fontWeight: '600',
-    color: '#1A1A1A',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666666',
   },
   form: {
     padding: 24,
@@ -128,24 +147,19 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1A1A1A',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
-    color: '#1A1A1A',
-    backgroundColor: '#F5F5F5',
   },
   textArea: {
     height: 120,
     paddingTop: 16,
   },
   nextButton: {
-    backgroundColor: '#0066CC',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

@@ -4,6 +4,8 @@ import { auth, db } from "../firebase";
 import { collection, onSnapshot, query, where, orderBy, updateDoc, doc, getDoc } from "firebase/firestore";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "./context/ThemeContext";
 
 export default function RestaurantDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -12,6 +14,7 @@ export default function RestaurantDashboard() {
   const [prepTimeInput, setPrepTimeInput] = useState("");
   const [showModal, setShowModal] = useState(false);
   const router = useRouter();
+  const { colors, isDark } = useTheme();
 
   const uid = auth.currentUser?.uid;
   const filteredOrders = orders.filter((order) => order.status === statusFilter);
@@ -122,45 +125,58 @@ export default function RestaurantDashboard() {
     }
   };
 
+  const renderTabBar = () => (
+    <View style={[styles.statusFilters, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      {["new", "accepted", "completed"].map((status) => (
+        <TouchableOpacity
+          key={status}
+          style={[
+            styles.statusFilter,
+            statusFilter === status && { backgroundColor: colors.primaryLight }
+          ]}
+          onPress={() => setStatusFilter(status)}
+        >
+          <Ionicons 
+            name={
+              status === 'new' ? 'time-outline' :
+              status === 'accepted' ? 'checkmark-circle-outline' :
+              'checkmark-done-circle-outline'
+            }
+            size={20}
+            color={statusFilter === status ? colors.primary : colors.textSecondary}
+          />
+          <Text style={[
+            styles.statusFilterText,
+            { color: statusFilter === status ? colors.primary : colors.textSecondary }
+          ]}>
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Restaurant Dashboard</Text>
-        <Text style={styles.subtitle}>Manage your orders and menu</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.text }]}>Restaurant Dashboard</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Manage your orders and menu</Text>
       </View>
 
       <View style={styles.actions}>
         <TouchableOpacity 
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push("/create-item")}
         >
           <Text style={styles.addButtonText}>➕ Add Menu Item</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.tabs}>
-        {["new", "accepted", "completed"].map((status) => (
-          <TouchableOpacity
-            key={status}
-            style={[
-              styles.tab,
-              statusFilter === status && styles.activeTab
-            ]}
-            onPress={() => setStatusFilter(status)}
-          >
-            <Text style={[
-              styles.tabText,
-              statusFilter === status && styles.activeTabText
-            ]}>
-              {status.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {renderTabBar()}
 
       {filteredOrders.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No {statusFilter} orders</Text>
+          <Text style={[styles.emptyText, { color: colors.text }]}>No {statusFilter} orders</Text>
         </View>
       ) : (
         <FlatList
@@ -168,25 +184,25 @@ export default function RestaurantDashboard() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <View style={[styles.card, { backgroundColor: getStatusBackground(item.status) }]}>
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.cardHeader}>
                 <Text style={[styles.status, { color: getStatusColor(item.status) }]}>
                   {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                 </Text>
-                <Text style={styles.total}>${item.total?.toFixed(2)}</Text>
+                <Text style={[styles.total, { color: colors.text }]}>${item.total?.toFixed(2)}</Text>
               </View>
 
               <View style={styles.customerInfo}>
-                <Text style={styles.customerEmail}>👤 {item.customerEmail}</Text>
-                <Text style={styles.customerAddress}>📍 {item.customerAddress}</Text>
-                <Text style={styles.customerPhone}>📱 {item.customerPhone}</Text>
+                <Text style={[styles.customerEmail, { color: colors.text }]}>👤 {item.customerEmail}</Text>
+                <Text style={[styles.customerAddress, { color: colors.textSecondary }]}>📍 {item.customerAddress}</Text>
+                <Text style={[styles.customerPhone, { color: colors.textSecondary }]}>📱 {item.customerPhone}</Text>
               </View>
 
               <View style={styles.itemsContainer}>
                 {item.items?.map((food: any, i: number) => (
                   <View key={i} style={styles.itemRow}>
-                    <Text style={styles.itemName}>{food.name}</Text>
-                    <Text style={styles.itemQuantity}>× {food.quantity}</Text>
+                    <Text style={[styles.itemName, { color: colors.text }]}>{food.name}</Text>
+                    <Text style={[styles.itemQuantity, { color: colors.textSecondary }]}>× {food.quantity}</Text>
                   </View>
                 ))}
               </View>
@@ -194,7 +210,7 @@ export default function RestaurantDashboard() {
               <View style={styles.buttonRow}>
                 {item.status === "new" && (
                   <TouchableOpacity 
-                    style={[styles.button, styles.acceptButton]}
+                    style={[styles.button, styles.acceptButton, { backgroundColor: colors.primary }]}
                     onPress={() => handleAccept(item.id)}
                   >
                     <Text style={styles.buttonText}>Accept Order</Text>
@@ -202,7 +218,7 @@ export default function RestaurantDashboard() {
                 )}
                 {item.status === "accepted" && (
                   <TouchableOpacity 
-                    style={[styles.button, styles.completeButton]}
+                    style={[styles.button, styles.completeButton, { backgroundColor: '#2E7D32' }]}
                     onPress={() => updateStatus(item.id, "completed")}
                   >
                     <Text style={styles.buttonText}>Complete Order</Text>
@@ -215,22 +231,27 @@ export default function RestaurantDashboard() {
       )}
 
       <Modal visible={showModal} transparent animationType="slide">
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Enter Preparation Time</Text>
-            <Text style={styles.modalSubtitle}>How many minutes will it take to prepare this order?</Text>
+        <View style={[styles.modalBackdrop, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)' }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Enter Preparation Time</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>How many minutes will it take to prepare this order?</Text>
             
             <TextInput
               value={prepTimeInput}
               onChangeText={setPrepTimeInput}
               keyboardType="numeric"
               placeholder="e.g. 20"
-              style={styles.input}
+              style={[styles.input, { 
+                backgroundColor: colors.background,
+                color: colors.text,
+                borderColor: colors.border
+              }]}
+              placeholderTextColor={colors.textSecondary}
             />
             
             <View style={styles.modalButtons}>
               <TouchableOpacity 
-                style={[styles.button, styles.cancelButton]}
+                style={[styles.button, styles.cancelButton, { backgroundColor: colors.textSecondary }]}
                 onPress={() => {
                   setShowModal(false);
                   setPrepTimeInput("");
@@ -240,7 +261,7 @@ export default function RestaurantDashboard() {
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={[styles.button, styles.confirmButton]}
+                style={[styles.button, styles.confirmButton, { backgroundColor: colors.primary }]}
                 onPress={submitPrepTime}
               >
                 <Text style={styles.buttonText}>Confirm</Text>
@@ -251,13 +272,13 @@ export default function RestaurantDashboard() {
       </Modal>
 
       <TouchableOpacity 
-        style={styles.logoutButton}
+        style={[styles.logoutButton, { backgroundColor: colors.card, borderColor: colors.border }]}
         onPress={async () => {
           await signOut(auth);
           router.replace('/login');
         }}
       >
-        <Text style={styles.logoutButtonText}>Logout</Text>
+        <Text style={[styles.logoutButtonText, { color: colors.text }]}>Logout</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -266,22 +287,18 @@ export default function RestaurantDashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   title: {
     fontSize: 28,
     fontWeight: '600',
-    color: '#1A1A1A',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666666',
   },
   actions: {
     padding: 24,
@@ -289,7 +306,6 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   addButton: {
-    backgroundColor: '#0066CC',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -299,31 +315,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  tabs: {
+  statusFilters: {
     flexDirection: 'row',
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  tab: {
-    flex: 1,
+    paddingHorizontal: 16,
     paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  statusFilter: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
     marginHorizontal: 4,
     borderRadius: 8,
+    gap: 6,
   },
-  activeTab: {
-    backgroundColor: '#F5F5F5',
-  },
-  tabText: {
+  statusFilterText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666666',
-  },
-  activeTabText: {
-    color: '#1A1A1A',
-    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,
@@ -333,7 +343,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    color: '#666666',
   },
   listContent: {
     padding: 24,
@@ -343,7 +352,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#F5F5F5',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -358,23 +366,19 @@ const styles = StyleSheet.create({
   total: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1A1A1A',
   },
   customerInfo: {
     marginBottom: 12,
   },
   customerEmail: {
     fontSize: 16,
-    color: '#1A1A1A',
     marginBottom: 4,
   },
   customerAddress: {
     fontSize: 16,
-    color: '#666666',
   },
   customerPhone: {
     fontSize: 16,
-    color: '#666666',
   },
   itemsContainer: {
     marginBottom: 16,
@@ -387,12 +391,10 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 16,
-    color: '#1A1A1A',
     flex: 1,
   },
   itemQuantity: {
     fontSize: 16,
-    color: '#666666',
     marginLeft: 8,
   },
   buttonRow: {
@@ -425,30 +427,25 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
     padding: 24,
   },
   modalContent: {
-    backgroundColor: 'white',
     padding: 24,
     borderRadius: 12,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#1A1A1A',
     marginBottom: 8,
     textAlign: 'center',
   },
   modalSubtitle: {
     fontSize: 16,
-    color: '#666666',
     marginBottom: 24,
     textAlign: 'center',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
@@ -461,12 +458,11 @@ const styles = StyleSheet.create({
   logoutButton: {
     margin: 24,
     padding: 16,
-    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     alignItems: 'center',
+    borderWidth: 1,
   },
   logoutButtonText: {
-    color: '#1A1A1A',
     fontSize: 16,
     fontWeight: '600',
   },
