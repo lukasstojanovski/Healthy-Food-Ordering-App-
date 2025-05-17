@@ -12,7 +12,6 @@ export default function MedicalForm() {
     hypertension: false,
     cholesterol: false,
     low_carb: false,
-    high_protein: false,
     low_fat: false,
   });
 

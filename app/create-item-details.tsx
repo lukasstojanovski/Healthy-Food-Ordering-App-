@@ -19,9 +19,8 @@ export default function CreateItemDetails() {
     hypertension: false,
     contains_lactose: false,
     nut_allergy: false,
-    low_carb: false,
-    high_protein: false,
-    low_fat: false,
+    contains_alot_of_carbs: false,
+    contains_alot_of_fat: false,
   });
   const [loading, setLoading] = useState(true);
 
@@ -52,9 +51,8 @@ export default function CreateItemDetails() {
                   "contains_lactose": true/false, // true = contains dairy
                   "nut_allergy": true/false, // true = contains peanuts, tree nuts, or traces
                   "calories": number // estimated for FULL meal
-                  "low_carb": true/false,
-                  "high_protein": true/false,
-                  "low_fat": true/false,
+                  "contains_alot_of_carbs": true/false,
+                  "contains_alot_of_fat": true/false,
                   "calories": number
 }\n\nBe strict. Assume peanut sauce contains gluten and nuts unless stated otherwise. Estimate calories for the *full meal*, not per portion.`
               },
@@ -80,9 +78,8 @@ export default function CreateItemDetails() {
           hypertension: result.hypertension ?? false,
           contains_lactose: result.contains_lactose ?? false,
           nut_allergy: result.nut_allergy ?? false,
-          low_carb: result.low_carb ?? false,
-          high_protein: result.high_protein ?? false,
-          low_fat: result.low_fat ?? false,
+          contains_alot_of_carbs: result.contains_alot_of_carbs ?? false,
+          contains_alot_of_fat: result.contains_alot_of_fat ?? false,
         });
 
         setCalories(String(result.calories ?? ""));

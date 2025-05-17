@@ -50,6 +50,8 @@ export default function MenuScreen() {
               const fieldMap: Record<string, string> = {
                 gluten_free: 'contains_gluten',
                 lactose_free: 'contains_lactose',
+                low_carb: 'contains_alot_of_carbs',
+                low_fat: 'contains_alot_of_fat',
               };
               const fieldName = fieldMap[condition] || condition;
               if (item[fieldName] === true) return false;
@@ -78,9 +80,8 @@ export default function MenuScreen() {
     if (item.cholesterol) warnings.push("High Cholesterol");
     if (item.diabetes) warnings.push("High Sugar");
     if (item.hypertension) warnings.push("High Sodium");
-    if (item.low_carb) warnings.push("Not Low Carb");
-    if (item.high_protein) warnings.push("Low Protein");
-    if (item.low_fat) warnings.push("High Fat");
+    if (item.contains_alot_of_carbs) warnings.push("Not Low Carb");
+    if (item.contains_alot_of_fat) warnings.push("High Fat");
 
     const isSafe = warnings.length === 0;
     const quantityInCart = cartItems.find(i => i.id === item.id)?.quantity || 0;

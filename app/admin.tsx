@@ -134,6 +134,8 @@ export default function AdminScreen() {
             >
               <Text style={styles.createButtonText}>Create Restaurant Account</Text>
             </TouchableOpacity>
+            
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
