@@ -5,7 +5,7 @@ import { collection, onSnapshot, query, where, orderBy, updateDoc, doc, getDoc }
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "./context/ThemeContext";
+import { useTheme } from "../src/context/ThemeContext";
 
 export default function RestaurantDashboard() {
   const [orders, setOrders] = useState<any[]>([]);

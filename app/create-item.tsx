@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, TextInput, Alert, StyleSheet, SafeAreaView, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "./context/ThemeContext";
+import { useTheme } from "../src/context/ThemeContext";
 
 export default function CreateItem() {
   const [name, setName] = useState("");

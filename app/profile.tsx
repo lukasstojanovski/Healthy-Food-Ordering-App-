@@ -4,7 +4,7 @@ import { auth, db } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
-import { useTheme } from './context/ThemeContext';
+import { useTheme } from '../src/context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {

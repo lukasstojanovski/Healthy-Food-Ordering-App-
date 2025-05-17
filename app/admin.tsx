@@ -12,6 +12,7 @@ export default function AdminScreen() {
   const [name, setName] = useState('');
   const [cuisine, setCuisine] = useState('');
   const [address, setAddress] = useState('');
+  const router = useRouter();
 
   const handleCreateRestaurant = async () => {
     if (!email || !password || !name || !cuisine || !address) {
@@ -49,8 +50,6 @@ export default function AdminScreen() {
       Alert.alert('Error', error.message);
     }
   };
-
-  const router = useRouter();
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -134,8 +133,6 @@ export default function AdminScreen() {
             >
               <Text style={styles.createButtonText}>Create Restaurant Account</Text>
             </TouchableOpacity>
-            
-
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

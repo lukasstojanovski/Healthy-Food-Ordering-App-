@@ -4,7 +4,8 @@ import { auth, db } from '../firebase';
 import { collection, getDocs, query, where, onSnapshot, doc, getDoc, DocumentData } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from './context/ThemeContext';
+import { useTheme } from '../src/context/ThemeContext';
+import { signOut } from 'firebase/auth';
 
 interface Order {
   id: string;
@@ -22,6 +23,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
   const { colors, isDark } = useTheme();
 
@@ -85,6 +87,28 @@ export default function HomeScreen() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setUserRole(userDoc.data().role);
+        }
+      }
+    };
+    fetchUserRole();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity
@@ -198,38 +222,47 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {filteredRestaurants.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <View style={[styles.emptyIconContainer, { backgroundColor: colors.primaryLight }]}>
-            <Ionicons name="search-outline" size={48} color={colors.primary} />
+      <FlatList
+        data={filteredRestaurants}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <View style={[styles.emptyIconContainer, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="restaurant-outline" size={40} color={colors.primary} />
+            </View>
+            <Text style={[styles.emptyText, { color: colors.text }]}>No restaurants found</Text>
+            <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+              Try adjusting your search
+            </Text>
           </View>
-          <Text style={[styles.emptyText, { color: colors.text }]}>No restaurants found</Text>
-          <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-            Try adjusting your search
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredRestaurants}
-          keyExtractor={item => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+        }
+      />
 
       {activeOrders.length > 0 && (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.activeOrdersButton, { backgroundColor: colors.primary }]}
           onPress={() => setModalVisible(true)}
-          activeOpacity={0.7}
         >
           <View style={styles.activeOrdersButtonContent}>
-            <Ionicons name="time-outline" size={20} color="#FFFFFF" />
+            <Ionicons name="time-outline" size={24} color="#FFFFFF" />
             <Text style={styles.activeOrdersButtonText}>Active Orders</Text>
-            <View style={[styles.activeOrdersBadge, { backgroundColor: '#FFFFFF' }]}>
-              <Text style={[styles.activeOrdersBadgeText, { color: colors.primary }]}>{activeOrders.length}</Text>
+            <View style={styles.activeOrdersBadge}>
+              <Text style={styles.activeOrdersBadgeText}>{activeOrders.length}</Text>
             </View>
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {userRole === 'admin' && (
+        <TouchableOpacity 
+          style={[styles.logoutButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={handleLogout}
+        >
+          <View style={styles.logoutButtonContent}>
+            <Ionicons name="log-out-outline" size={24} color={colors.text} />
+            <Text style={[styles.logoutButtonText, { color: colors.text }]}>Logout</Text>
           </View>
         </TouchableOpacity>
       )}
@@ -604,5 +637,32 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     padding: 4,
+  },
+  logoutButton: {
+    position: 'absolute',
+    bottom: 24,
+    left: 24,
+    right: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  logoutButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  logoutButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

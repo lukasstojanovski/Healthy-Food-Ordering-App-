@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 import { doc, getDoc } from "firebase/firestore";
 
 function RootLayoutNav() {
@@ -22,9 +22,12 @@ function RootLayoutNav() {
       if (user) {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
-          setUserRole(userDoc.data().role);
+          const role = userDoc.data().role;
+          console.log('User role:', role);
+          setUserRole(role);
         }
       } else {
+        console.log('No user logged in');
         setUserRole(null);
       }
       setIsAuthenticated(!!user);
@@ -50,6 +53,13 @@ function RootLayoutNav() {
         router.replace("/restaurant-dashboard");
       } else {
         router.replace("/");
+      }
+    }
+
+    if (isAuthenticated && userRole === 'restaurant') {
+      const customerPages = ['index', 'cart', 'profile', 'menu', 'medical-form', 'order-history'];
+      if (customerPages.includes(segments?.[0] || '')) {
+        router.replace("/restaurant-dashboard");
       }
     }
   }, [segments, authChecked, isAuthenticated, userRole]);
