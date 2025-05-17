@@ -1,30 +1,33 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { CartProvider } from "../src/context/CartContext";
-import { TouchableOpacity, View, ActivityIndicator, StyleSheet } from "react-native";
+import { TouchableOpacity, View, ActivityIndicator, StyleSheet, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 
-export default function RootLayout() {
+function RootLayoutNav() {
   const router = useRouter();
   const segments = useSegments();
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { colors } = useTheme();
 
   const HeaderButtons = () => (
     <View style={styles.headerButtons}>
       <TouchableOpacity 
-        style={styles.headerButton}
+        style={[styles.headerButton, { backgroundColor: colors.background }]}
         onPress={() => router.push("/profile")}
       >
-        <Ionicons name="person-outline" size={24} color="#1A1A1A" />
+        <Ionicons name="person-outline" size={24} color={colors.text} />
       </TouchableOpacity>
       <TouchableOpacity 
-        style={styles.headerButton}
+        style={[styles.headerButton, { backgroundColor: colors.background }]}
         onPress={() => router.push("/cart")}
       >
-        <Ionicons name="cart-outline" size={24} color="#1A1A1A" />
+        <Ionicons name="cart-outline" size={24} color={colors.text} />
       </TouchableOpacity>
     </View>
   );
@@ -33,6 +36,7 @@ export default function RootLayout() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAuthenticated(!!user);
       setAuthChecked(true);
+      setIsLoading(false);
     });
     return unsubscribe;
   }, []);
@@ -51,10 +55,10 @@ export default function RootLayout() {
     }
   }, [segments, authChecked, isAuthenticated]);
 
-  if (!authChecked) {
+  if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0066CC" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.text }}>Loading...</Text>
       </View>
     );
   }
@@ -64,13 +68,13 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#FFFFFF',
+            backgroundColor: colors.card,
           },
           headerTitle: () => null,
           headerRight: () => <HeaderButtons />,
           headerShadowVisible: false,
           headerBackVisible: true,
-          headerTintColor: '#1A1A1A',
+          headerTintColor: colors.text,
         }}
       >
         <Stack.Screen 
@@ -105,12 +109,19 @@ export default function RootLayout() {
   );
 }
 
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootLayoutNav />
+    </ThemeProvider>
+  );
+}
+
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
   },
   headerButtons: {
     flexDirection: 'row',
@@ -121,8 +132,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
   },
 });

@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Alert, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TextInput, Alert, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Switch } from 'react-native';
 import { auth, db } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
+import { useTheme } from './context/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
   const [address, setAddress] = useState('');
   const router = useRouter();
+  const { colors, isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -42,52 +45,78 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-        <Text style={styles.subtitle}>Manage your account settings</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Manage your account settings</Text>
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location</Text>
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Location</Text>
           <View style={styles.inputWrapper}>
-            <Text style={styles.label}>Delivery Address</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Delivery Address</Text>
             <TextInput
               placeholder="Enter your delivery location"
               value={address}
               onChangeText={setAddress}
-              style={styles.input}
-              placeholderTextColor="#999"
+              style={[styles.input, { 
+                backgroundColor: colors.background,
+                color: colors.text,
+                borderColor: colors.border
+              }]}
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
           <TouchableOpacity 
-            style={styles.saveButton}
+            style={[styles.saveButton, { backgroundColor: colors.primary }]}
             onPress={handleSave}
           >
             <Text style={styles.saveButtonText}>Save Address</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
+          <View style={[styles.themeToggle, { backgroundColor: colors.background }]}>
+            <View style={styles.themeToggleContent}>
+              <Ionicons 
+                name={isDark ? "moon" : "sunny"} 
+                size={24} 
+                color={colors.primary} 
+              />
+              <Text style={[styles.themeToggleText, { color: colors.text }]}>
+                {isDark ? 'Dark Mode' : 'Light Mode'}
+              </Text>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={isDark ? colors.background : colors.background}
+            />
+          </View>
+        </View>
+
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
           <TouchableOpacity 
-            style={styles.menuButton}
+            style={[styles.menuButton, { backgroundColor: colors.background }]}
             onPress={() => router.push('/medical-form')}
           >
-            <Text style={styles.menuButtonText}>Update Medical Profile</Text>
+            <Text style={[styles.menuButtonText, { color: colors.text }]}>Update Medical Profile</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.menuButton}
+            style={[styles.menuButton, { backgroundColor: colors.background }]}
             onPress={() => router.push('/order-history')}
           >
-            <Text style={styles.menuButtonText}>View Order History</Text>
+            <Text style={[styles.menuButtonText, { color: colors.text }]}>View Order History</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity 
-          style={styles.logoutButton}
+          style={[styles.logoutButton, { backgroundColor: '#B22222' }]}
           onPress={handleLogout}
         >
           <Text style={styles.logoutButtonText}>Logout</Text>
@@ -100,22 +129,18 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   title: {
     fontSize: 28,
     fontWeight: '600',
-    color: '#1A1A1A',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666666',
   },
   content: {
     flex: 1,
@@ -123,12 +148,10 @@ const styles = StyleSheet.create({
   section: {
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1A1A1A',
     marginBottom: 16,
   },
   inputWrapper: {
@@ -136,19 +159,16 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#1A1A1A',
     fontWeight: '500',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#1A1A1A',
+    borderWidth: 1,
   },
   saveButton: {
-    backgroundColor: '#1A1A1A',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -158,14 +178,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  themeToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  themeToggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  themeToggleText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
   menuButton: {
-    backgroundColor: '#F5F5F5',
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
+    borderWidth: 1,
   },
   menuButtonText: {
-    color: '#1A1A1A',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -174,7 +210,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: '#B22222',
   },
   logoutButtonText: {
     color: '#FFFFFF',

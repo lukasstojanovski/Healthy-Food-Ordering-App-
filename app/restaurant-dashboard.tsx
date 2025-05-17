@@ -36,9 +36,19 @@ export default function RestaurantDashboard() {
           try {
             const userSnap = await getDoc(doc(db, "users", order.userId));
             const userData = userSnap.exists() ? userSnap.data() : {};
-            return { ...order, customerEmail: userData.email, customerAddress: userData.address };
+            return { 
+              ...order, 
+              customerEmail: userData.email, 
+              customerAddress: userData.address,
+              customerPhone: userData.phone || "Not provided"
+            };
           } catch {
-            return { ...order, customerEmail: "Unknown", customerAddress: "Unknown" };
+            return { 
+              ...order, 
+              customerEmail: "Unknown", 
+              customerAddress: "Unknown",
+              customerPhone: "Unknown"
+            };
           }
         })
       );
@@ -169,6 +179,7 @@ export default function RestaurantDashboard() {
               <View style={styles.customerInfo}>
                 <Text style={styles.customerEmail}>👤 {item.customerEmail}</Text>
                 <Text style={styles.customerAddress}>📍 {item.customerAddress}</Text>
+                <Text style={styles.customerPhone}>📱 {item.customerPhone}</Text>
               </View>
 
               <View style={styles.itemsContainer}>
@@ -358,6 +369,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   customerAddress: {
+    fontSize: 16,
+    color: '#666666',
+  },
+  customerPhone: {
     fontSize: 16,
     color: '#666666',
   },
