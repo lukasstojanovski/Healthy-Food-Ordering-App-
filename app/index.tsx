@@ -266,6 +266,18 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
       )}
+      
+      {userRole === 'restaurant' && (
+        <TouchableOpacity 
+          style={[styles.logoutButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={handleLogout}
+        >
+          <View style={styles.logoutButtonContent}>
+            <Ionicons name="log-out-outline" size={24} color={colors.text} />
+            <Text style={[styles.logoutButtonText, { color: colors.text }]}>Logout</Text>
+          </View>
+        </TouchableOpacity>
+      )}
 
       <Modal
         animationType="slide"
