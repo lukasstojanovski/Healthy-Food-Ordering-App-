@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -44,9 +45,12 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <View style={styles.contentContainer}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.title}>Sign In</Text>
-          <Text style={styles.subtitle}>Welcome back to your account</Text>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoCircle}>
+            <Ionicons name="restaurant" size={48} color="#0066CC" />
+          </View>
+          <Text style={styles.logoText}>DietPal</Text>
+          <Text style={styles.logoSubtext}>Your Healthy Food Companion</Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -104,19 +108,28 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: 'center',
   },
-  headerContainer: {
-    marginBottom: 40,
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 48,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '600',
+  logoCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#E6F0FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logoText: {
+    fontSize: 36,
+    fontWeight: '700',
     color: '#1A1A1A',
     marginBottom: 8,
   },
-  subtitle: {
+  logoSubtext: {
     fontSize: 16,
     color: '#666666',
-    lineHeight: 22,
   },
   formContainer: {
     gap: 20,
@@ -137,7 +150,7 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   loginButton: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#0066CC',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -158,7 +171,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   registerLink: {
-    color: '#1A1A1A',
+    color: '#0066CC',
     fontSize: 14,
     fontWeight: '600',
   },
